@@ -1,30 +1,21 @@
-from django.db.models.signals import post_save
+
+from django.core.mail import send_mail
+from django.conf import settings
 from django.dispatch import receiver
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
-from .tokens import account_activation_token
+from django.db.models.signals import post_save
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.crypto import get_random_string
 
-from .models import userProfiles
-
-
-
-@receiver(post_save, sender=userProfiles)
-def send_activation_email(sender, instance, created, **kwargs):
+@receiver(post_save, sender=User)
+def send_verification_email(sender, instance, created, **kwargs):
     if created:
-        user = instance
-        if not user.is_active:  # if user is not active send activation email
-            uid = user.pk
-            token = account_activation_token.make_token(user)
+        verification_code=get_random_string(length=50)
+        subject='Verify your emial'
+        message=f'Your verification code is {verification_code}'
+        email_from=settings.EMAIL_HOST_USER
+        recipient_list=[instance.email]
+        send_mail(subject,message,email_from,recipient_list)
 
-            mail_subject = 'Activate your Fit Genius account'
-            message = render_to_string('users/account_activation_email.html', {
-                'user': user,
-                'uid': uid,
-                'token': token,
-            })
 
-            to_email = user.email
-            email = EmailMessage(mail_subject, message, to=[to_email])
-            email.send()
-
-            print(f"Activation email sent to {to_email}")
+        

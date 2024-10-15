@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-#tm9t^+u+exl@*1z_)((buyr_%rv^6%@0e*%q+e&^+m05oim_k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+        'localhost','127.0.0.1',
+        'http://localhost:3000',
+        'http://localhost:8000/api/register/'
+
+]
 
 
 # Application definition
@@ -40,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'main',
     'rest_framework_simplejwt',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -59,8 +65,8 @@ EMAIL_PORT =587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER='nishishah0104@gmail.com'
 EMAIL_HOST_PASSWORD='dhyl cbbj lryr vvtp'
-
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,7 +77,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'fitnessapp.urls'
-
+CORS_ALLOW_ALL_ORIGINS = True
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -90,6 +96,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'fitnessapp.wsgi.application'
 
+CORS_ALLOWED_ORIGNS=[
+    'http://localhost:3000',
+]
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

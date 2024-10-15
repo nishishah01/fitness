@@ -1,70 +1,78 @@
-from django.core.mail import EmailMessage
-from rest_framework import generics, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.template.loader import render_to_string
-from .models import userProfiles, healthData
-from .serializers import UserProfilesSerializer, healthDataSerializer
-from rest_framework.permissions import AllowAny
-from .tokens import account_activation_token
-import uuid 
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import status
+from rest_framework.response import Response
+from django.contrib.auth import authenticate
+from rest_framework.views import APIView
+from django.contrib.auth.models import User
+from .serializers import UserSerializer,UserProfilesSerializer
+from .models import UserProfile
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.tokens import default_token_generator
+from django.http import HttpResponse
+from django.utils.http import urlsafe_base64_decode
 
-class UserProfileListCreateView(generics.ListCreateAPIView):
-    queryset = userProfiles.objects.all()
-    serializer_class = UserProfilesSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
 
-class HealthDataListCreateView(generics.ListCreateAPIView):
-    queryset = healthData.objects.all()
-    serializer_class = healthDataSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+
 
 class RegisterView(APIView):
-    permission_classes=[AllowAny]
-    http_method_names = ['post']
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+       
+        user = authenticate(username=username, password=password)
+        
+        if user is not None:
+            if user.is_active:  
+                refresh = RefreshToken.for_user(user)
+                
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'Account is not active'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            profile = UserProfile.objects.get(user=request.user)
+            serializer = UserProfilesSerializer(profile)
+            return Response(serializer.data)
+        except UserProfile.DoesNotExist:
+            return Response({"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
     def post(self, request):
         serializer = UserProfilesSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            user.is_active = False 
-            user.save()
-
-            uid = user.pk 
-            token =account_activation_token.make_token(user)
-            mail_subject = 'Activate your account'
-            message = render_to_string('users/account_activation_email.html', {
-                'user': user,
-                'uid': uid,
-                'token': token,
-            })
-            to_email = serializer.validated_data.get('email')
-            email = EmailMessage(mail_subject, message, to=[to_email])
-            email.send()
-
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'user': serializer.data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ActivateView(APIView):
-    def get(self, request, uid, token):
-        try:
-            user = userProfiles.objects.get(pk=uid)
-        except userProfiles.DoesNotExist:
-            user = None
+def verify_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
 
-        if user is not None and token == account_activation_token.make_token(user):
-            user.is_active = True
-            user.save()
-            return Response({'message': 'Your account has been activated'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': 'Activation link is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True 
+        user.save()
+        return HttpResponse('Your email has been verified successfully.')
+    else:
+        return HttpResponse('Verification link is invalid!')
