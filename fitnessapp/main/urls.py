@@ -6,6 +6,8 @@ from .views import *
 urlpatterns=[
    path('register/',RegisterView.as_view(),name='register'),
     path('login/', LoginView.as_view(), name='login'),
-   path('profile/',UserProfileView.as_view(),name='profile'),
-   path('verify/<uidb64>/<token>/', verify_email, name='verify_email'),
+    path('refresh/',RefreshView.as_view(), name='refresh'),
+
+   path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
+   path('resend-verification/',ResendVerificationView.as_view(), name='resend-verification'),
 ]
