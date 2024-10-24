@@ -2,11 +2,10 @@ from rest_framework import generics,status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
-from django.contrib.auth import authenticate
+from rest_framework_simplejwt.authentication import JWTAuthentication 
 from .models import UserProfile
 from .serializers import *
-from django.shortcuts import get_object_or_404,redirect
-from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -20,7 +19,23 @@ class RegisterView(generics.CreateAPIView):
     def perform_create(self, serializer):
         user=serializer.save(is_active=False)
         return user
-    
+class UpdateUserProfileView(generics.UpdateAPIView):
+    authentication_classes = [JWTAuthentication] 
+    permission_classes = [IsAuthenticated] 
+    serializer_class = UserProfilesSerializer
+
+    def get_object(self):
+        # Retrieve the logged-in user's profile
+        return self.request.user
+
+    def patch(self, request, *args, **kwargs):
+        logger.info(f"Request data: {request.data}") 
+        user_profile = self.get_object()
+        serializer = self.get_serializer(user_profile, data=request.data, partial=True)  # partial=True allows for PATCH request
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer

@@ -10,4 +10,6 @@ urlpatterns=[
 
    path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
    path('resend-verification/',ResendVerificationView.as_view(), name='resend-verification'),
+    path('api/user-profile/', UpdateUserProfileView.as_view(), name='update-user-profile'),
+   
 ]

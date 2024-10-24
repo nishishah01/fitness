@@ -1,4 +1,7 @@
 from pathlib import Path
+import google.generativeai as genai
+
+import os
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,6 +27,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
 
+genai.configure(api_key=os.environ["AIzaSyBDY379HV2QzJj8ZizCV3HXUow63fP6jME"])
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -45,6 +50,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',  # Optional
         'rest_framework.authentication.SessionAuthentication',
+         'rest_framework.permissions.IsAuthenticated',
     ]
 }
 
@@ -59,7 +65,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'nishishah0104@gmail.com'
-EMAIL_HOST_PASSWORD = 'your_actual_app_password'  # Replace with your actual Gmail app password
+EMAIL_HOST_PASSWORD = 'ccyr pplf sggm iehd'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -127,3 +133,4 @@ STATIC_URL = 'static/'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
