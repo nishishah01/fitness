@@ -1,6 +1,5 @@
 from pathlib import Path
 import google.generativeai as genai
-
 import os
 from datetime import timedelta
 
@@ -27,7 +26,11 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
 
-genai.configure(api_key=os.environ["AIzaSyBDY379HV2QzJj8ZizCV3HXUow63fP6jME"])
+
+genai.configure(api_key="AIzaSyBDY379HV2QzJj8ZizCV3HXUow63fP6jME")
+model = genai.GenerativeModel('gemini-1.5-flash')
+response = model.generate_content("The opposite of hot is")
+print(response)
 
 # Application definition
 INSTALLED_APPS = [
