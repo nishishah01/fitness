@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import User
+
 from django.db import models
 
 class UserProfile(AbstractUser):
@@ -15,3 +15,4 @@ class UserProfile(AbstractUser):
 
     def get_object(self):
         return self.request.user
+    

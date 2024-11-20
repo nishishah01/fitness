@@ -1,6 +1,7 @@
 from pathlib import Path
 import google.generativeai as genai
-import os
+from django.conf import settings
+
 from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,11 +27,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
 
+GENAI_API_KEY="AIzaSyAvslsrhBojctJ8EBRpV7AVpFtq3uYfxw4"
+genai.configure(api_key=settings.GENAI_API_KEY)
 
-genai.configure(api_key="AIzaSyBDY379HV2QzJj8ZizCV3HXUow63fP6jME")
-model = genai.GenerativeModel('gemini-1.5-flash')
-response = model.generate_content("The opposite of hot is")
-print(response)
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -53,8 +53,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',  # Optional
         'rest_framework.authentication.SessionAuthentication',
-         'rest_framework.permissions.IsAuthenticated',
-    ]
+        
+    ],
+     'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
 
 SIMPLE_JWT = {
@@ -137,3 +140,4 @@ STATIC_URL = 'static/'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+DEBUG=True
