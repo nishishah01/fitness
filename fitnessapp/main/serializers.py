@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from .models import UserProfile
+from .models import UserProfile,FitnessPlan
 from django.contrib.auth.models import User
 
 
 class UserProfilesSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)  # write_only and optional
-    username = serializers.CharField(read_only=True)  # username is read-only
-    email = serializers.EmailField(read_only=True)    # email is read-only
+    username = serializers.CharField(write_only=True)  # username is write-only
+    email = serializers.EmailField(write_only=True)    # email is write only
 
     class Meta:
         model = UserProfile
@@ -82,3 +82,10 @@ class ResendVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError('user already verified')
         
         return data
+    
+
+class FitnessPlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FitnessPlan
+        fields = '__all__' 
+        read_only_fields = ['user', 'created_at']

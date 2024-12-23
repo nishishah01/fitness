@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication 
-from .models import UserProfile
+from .models import UserProfile,FitnessPlan
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
 from django.core.mail import send_mail
@@ -179,19 +179,25 @@ class FitnessPlanView(APIView):
         try:
             response = requests.post(url, headers=headers, params=params, json=data)
             if response.status_code == 200:
-                # Check if response has content before attempting to parse
-                if response.text:
-                    plan = response.json()
-                    return Response({"message":"Workout Plan generated Successfullly","plan":{response.text}}, status=status.HTTP_200_OK)
-                else:
-                    return Response({"error": "Empty response from the server"}, status=status.HTTP_204_NO_CONTENT)
-            else:
-                # Log details for failed request
-                return Response(
-                    {"error": "Failed to create a plan", "status_code": response.status_code, "details": response.text}, 
-                    status=response.status_code
+                plan_content = response.json()
+                
+                # Parse the response content and save to the database
+                fitness_plan = FitnessPlan.objects.create(
+                    user=request.user,
+                    **plan_content  # Map JSON response to model fields
                 )
+
+                serializer = FitnessPlanSerializer(fitness_plan)
+                return Response({"message": "Plan saved successfully", "plan": serializer.data}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error": response.text}, status=response.status_code)
         except requests.exceptions.RequestException as e:
-            return Response({"error": f"RequestException: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-        except ValueError as ve:
-            return Response({"error": f"ValueError in JSON parsing: {str(ve)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"Request failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class RetrieveFitnessPlanView(generics.ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = FitnessPlanSerializer
+
+    def get_queryset(self):
+        return FitnessPlan.objects.filter(user=self.request.user).order_by('-created_at')
